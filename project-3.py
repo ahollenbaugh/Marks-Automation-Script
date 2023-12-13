@@ -300,7 +300,7 @@ def timecode_to_frames(timecode, frame_rate=24):
 
 num_frames = timecode_to_frames(duration)
 
-print(f"Number of frames in timecode '{duration}': {num_frames}")
+if args.verbose: print(f"Number of frames in timecode '{duration}': {num_frames}")
 
 
 

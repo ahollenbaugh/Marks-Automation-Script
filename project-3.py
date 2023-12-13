@@ -268,5 +268,40 @@ def get_video_duration(file_path):
 duration = get_video_duration(args.video_file)
 if args.verbose: print(f"Video Duration: {duration}")
 
+# Convert timecode to total number of frames:
+
+from datetime import datetime
+
+def timecode_to_frames(timecode, frame_rate=24):
+  """
+  Converts a timecode string to the number of frames at a given frame rate.
+
+  Args:
+      timecode: The timecode string in HH:MM:SS.ms format.
+      frame_rate: The frame rate (default: 24 fps).
+
+  Returns:
+      The number of frames represented by the timecode (int).
+  """
+
+  # Parse the timecode string
+  try:
+    time_obj = datetime.strptime(timecode, "%H:%M:%S.%f")
+  except ValueError:
+    raise ValueError(f"Invalid timecode format: {timecode}")
+
+  # Calculate total seconds
+  total_seconds = time_obj.hour * 3600 + time_obj.minute * 60 + time_obj.second + time_obj.microsecond / 1e6
+
+  # Convert to frames
+  num_frames = total_seconds * frame_rate
+
+  return int(num_frames)
+
+num_frames = timecode_to_frames(duration)
+
+print(f"Number of frames in timecode '{duration}': {num_frames}")
+
+
 
 print()

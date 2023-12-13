@@ -266,7 +266,7 @@ def get_video_duration(file_path):
         return f"Error: {e}"
 
 duration = get_video_duration(args.video_file)
-print(f"Video Duration: {duration}")
+if args.verbose: print(f"Video Duration: {duration}")
 
 
 print()

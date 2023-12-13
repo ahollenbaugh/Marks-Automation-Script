@@ -6,6 +6,7 @@ import pymongo
 import os
 from datetime import date
 import subprocess
+import frametotimecode
 
 def is_consecutive(frame1, frame2):
     return abs(frame1 - frame2) == 1 or frame2 == -1
@@ -30,7 +31,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--files", dest="workFiles", help="files to process", nargs="+")
 parser.add_argument("--verbose", action="store_true", help="show verbose")
 parser.add_argument("--xytech", dest="xytech", help="name of xytech file")
-parser.add_argument("--output", dest="output", help="csv or database")
+parser.add_argument("--output", dest="output", help="csv, xls, or database")
 parser.add_argument("--process", dest="video_file", help="name of video file")
 
 args = parser.parse_args()
@@ -174,81 +175,6 @@ myKeys = list(final_dict_for_real.keys())
 myKeys.sort(key=lambda a: a[2]) # sort each key/tuple by third element (frame) (ugly but it's good enough)
 final_dict_for_real = {i: final_dict_for_real[i] for i in myKeys}
 
-if args.output == "csv":
-    # Write results to csv file:
-    with open('frame_fixes.csv', 'w', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow(["Producer", "Operator", "job", "notes"])
-        writer.writerow([producer, operator, job, notes])
-        writer.writerow([" "])
-        writer.writerow(["show location", "frames to fix"])
-
-        # Calculate ranges:
-        frame_list = list()
-        previous_frame = -1 # to get us started since the first frame won't have a previous frame
-        for tuple in final_dict_for_real:
-            frame = tuple[2]
-            if is_consecutive(frame, previous_frame):
-                pass
-            else:
-                if len(frame_list) == 1: # put this frame on a line by itself
-                    writer.writerow([final_dict_for_real[tuple], frame_list[0]])
-                else: # print the range
-                    writer.writerow([final_dict_for_real[tuple], range_string(frame_list[0], frame_list[-1])])
-                frame_list = list() # reset to empty list
-            frame_list.append(frame)
-            save_previous = previous_frame
-            previous_frame = frame # save this frame as the previous so that next time we'll have something to check
-
-        # Handle the last frame:
-        if is_consecutive(frame, save_previous):
-            writer.writerow([final_dict_for_real[tuple], range_string(save_previous, frame)])
-        else:
-            writer.writerow([final_dict_for_real[tuple], frame])
-else:
-    # Insert into database:
-    result1 = files_collection.insert_many(files_documents)
-
-    # Calculate ranges:
-    frame_list = list()
-    previous_frame = -1 # to get us started since the first frame won't have a previous frame
-    for tuple in final_dict_for_real:
-        frame = tuple[2]
-        if is_consecutive(frame, previous_frame):
-            pass
-        else:
-            if len(frame_list) == 1: # put this frame on a line by itself
-                jobs_documents.append({"user_on_file": tuple[0],
-                                       "date_of_file": tuple[1],
-                                       "location": final_dict_for_real[tuple],
-                                       "frames": frame_list[0]})
-            else: # print the range
-                jobs_documents.append({"user_on_file": tuple[0],
-                                       "date_of_file": tuple[1],
-                                       "location": final_dict_for_real[tuple],
-                                       "frames": range_string(frame_list[0], frame_list[-1])})
-            frame_list = list() # reset to empty list
-        frame_list.append(frame)
-        save_previous = previous_frame
-        previous_frame = frame # save this frame as the previous so that next time we'll have something to check
-
-    # Handle the last frame:
-    if is_consecutive(frame, save_previous):
-        jobs_documents.append({"user_on_file": tuple[0],
-                               "date_of_file": tuple[1],
-                               "location": final_dict_for_real[tuple],
-                               "frames": range_string(save_previous, frame)})
-    else:
-        jobs_documents.append({"user_on_file": tuple[0],
-                               "date_of_file": tuple[1],
-                               "location": final_dict_for_real[tuple],
-                               "frames": frame})
-        
-    result2 = jobs_collection.insert_many(jobs_documents)
-    print(f"Inserted these documents into the files collection: {result1}")
-    print(f"Inserted these documents into the jobs collection: {result2}")
-
-
 # Process video file:
 
 def get_video_duration(file_path):
@@ -336,14 +262,95 @@ def get_frame_ranges_within_duration(database_name, collection_name, duration):
 
     return result
 
-# Example usage
-# database_name = "your_database_name"
-# collection_name = "jobs"
-# duration = 100  # Set your desired duration here
 result = get_frame_ranges_within_duration("comp467", "jobs", num_frames)
 
 print("Frame ranges within duration:")
 if args.verbose: print(result)
+
+# Convert each frame to timecodes so we can grab thumbnails for each frame/frame range:
+timecodes_for_thumbnails = []
+for frame in result:
+    tc = frametotimecode.convert(frame)
+    timecodes_for_thumbnails.append(tc)
+
+if args.output == "csv" or "xls":
+    # Write results to csv file:
+    with open('frame_fixes.csv', 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["Producer", "Operator", "job", "notes"])
+        writer.writerow([producer, operator, job, notes])
+        writer.writerow([" "])
+        writer.writerow(["show location", "frames to fix"])
+
+        # Calculate ranges:
+        frame_list = list()
+        previous_frame = -1 # to get us started since the first frame won't have a previous frame
+        for tuple in final_dict_for_real:
+            frame = tuple[2]
+            if is_consecutive(frame, previous_frame):
+                pass
+            else:
+                if len(frame_list) == 1: # put this frame on a line by itself
+                    writer.writerow([final_dict_for_real[tuple], frame_list[0]])
+                else: # print the range
+                    writer.writerow([final_dict_for_real[tuple], range_string(frame_list[0], frame_list[-1])])
+                frame_list = list() # reset to empty list
+            frame_list.append(frame)
+            save_previous = previous_frame
+            previous_frame = frame # save this frame as the previous so that next time we'll have something to check
+
+        # Handle the last frame:
+        if is_consecutive(frame, save_previous):
+            writer.writerow([final_dict_for_real[tuple], range_string(save_previous, frame)])
+        else:
+            writer.writerow([final_dict_for_real[tuple], frame])
+elif args.output == "db":
+    # Insert into database:
+    result1 = files_collection.insert_many(files_documents)
+
+    # Calculate ranges:
+    frame_list = list()
+    previous_frame = -1 # to get us started since the first frame won't have a previous frame
+    for tuple in final_dict_for_real:
+        frame = tuple[2]
+        if is_consecutive(frame, previous_frame):
+            pass
+        else:
+            if len(frame_list) == 1: # put this frame on a line by itself
+                jobs_documents.append({"user_on_file": tuple[0],
+                                       "date_of_file": tuple[1],
+                                       "location": final_dict_for_real[tuple],
+                                       "frames": frame_list[0]})
+            else: # print the range
+                jobs_documents.append({"user_on_file": tuple[0],
+                                       "date_of_file": tuple[1],
+                                       "location": final_dict_for_real[tuple],
+                                       "frames": range_string(frame_list[0], frame_list[-1])})
+            frame_list = list() # reset to empty list
+        frame_list.append(frame)
+        save_previous = previous_frame
+        previous_frame = frame # save this frame as the previous so that next time we'll have something to check
+
+    # Handle the last frame:
+    if is_consecutive(frame, save_previous):
+        jobs_documents.append({"user_on_file": tuple[0],
+                               "date_of_file": tuple[1],
+                               "location": final_dict_for_real[tuple],
+                               "frames": range_string(save_previous, frame)})
+    else:
+        jobs_documents.append({"user_on_file": tuple[0],
+                               "date_of_file": tuple[1],
+                               "location": final_dict_for_real[tuple],
+                               "frames": frame})
+        
+    result2 = jobs_collection.insert_many(jobs_documents)
+    print(f"Inserted these documents into the files collection: {result1}")
+    print(f"Inserted these documents into the jobs collection: {result2}")
+
+
+
+
+
 
 
 print()

@@ -303,5 +303,47 @@ num_frames = timecode_to_frames(duration)
 if args.verbose: print(f"Number of frames in timecode '{duration}': {num_frames}")
 
 
+# Get all frame ranges within num_frames:
+
+def get_frame_ranges_within_duration(database_name, collection_name, duration):
+    # Connect to MongoDB
+    client = pymongo.MongoClient('mongodb://localhost:27017/')
+    database = client[database_name]
+    collection = database[collection_name]
+
+    # Query for frame ranges within the given duration
+    query = {"frames": {"$exists": True}}
+    projection = {"_id": 0, "frames": 1}
+    cursor = collection.find(query, projection)
+
+    result = []
+
+    for document in cursor:
+        frames = document.get("frames")
+
+        if isinstance(frames, int):
+            # Handle the case where "frames" is a single number
+            if frames <= duration:
+                result.append(frames)
+        elif isinstance(frames, dict):
+            # Handle the case where "frames" is a range of numbers
+            start_frame = frames.get("start", 0)
+            end_frame = frames.get("end", 0)
+            frame_count = end_frame - start_frame + 1
+
+            if frame_count <= duration:
+                result.append({"start": start_frame, "end": end_frame})
+
+    return result
+
+# Example usage
+# database_name = "your_database_name"
+# collection_name = "jobs"
+# duration = 100  # Set your desired duration here
+result = get_frame_ranges_within_duration("comp467", "jobs", num_frames)
+
+print("Frame ranges within duration:")
+if args.verbose: print(result)
+
 
 print()

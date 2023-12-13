@@ -43,6 +43,7 @@ else:
         print(f"workFiles = {args.workFiles}")
         if args.xytech: print(f"xytech = {args.xytech}")
         if args.output: print(f"output = {args.output}")
+        if args.video_file: print(f"video_file = {args.video_file}")
 
 print()
 

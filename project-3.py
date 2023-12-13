@@ -7,6 +7,7 @@ import os
 from datetime import date
 import subprocess
 import frametotimecode
+import openpyxl
 
 def is_consecutive(frame1, frame2):
     return abs(frame1 - frame2) == 1 or frame2 == -1
@@ -275,6 +276,11 @@ for frame in result:
 
 if args.output == "csv" or "xls":
     # Write results to csv file:
+    if args.output == "xls":
+        workbook = openpyxl.Workbook()
+        sheet = workbook.active
+        sheet.append(["Producer", "Operator", "job", "notes"])
+        workbook.save('example.xlsx')
     with open('frame_fixes.csv', 'w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(["Producer", "Operator", "job", "notes"])

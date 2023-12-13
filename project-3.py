@@ -30,6 +30,7 @@ parser.add_argument("--files", dest="workFiles", help="files to process", nargs=
 parser.add_argument("--verbose", action="store_true", help="show verbose")
 parser.add_argument("--xytech", dest="xytech", help="name of xytech file")
 parser.add_argument("--output", dest="output", help="csv or database")
+parser.add_argument("--process", dest="video_file", help="name of video file")
 
 args = parser.parse_args()
 

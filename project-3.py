@@ -5,6 +5,7 @@ import sys
 import pymongo
 import os
 from datetime import date
+import subprocess
 
 def is_consecutive(frame1, frame2):
     return abs(frame1 - frame2) == 1 or frame2 == -1
@@ -246,4 +247,26 @@ else:
     result2 = jobs_collection.insert_many(jobs_documents)
     print(f"Inserted these documents into the files collection: {result1}")
     print(f"Inserted these documents into the jobs collection: {result2}")
+
+
+# Process video file:
+
+def get_video_duration(file_path):
+    command = ['ffmpeg', '-i', file_path]
+
+    try:
+        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        duration_line = re.search(r"Duration: (.*?),", result.stderr)
+        if duration_line:
+            duration = duration_line.group(1)
+            return duration
+        else:
+            return "Duration information not found."
+    except subprocess.CalledProcessError as e:
+        return f"Error: {e}"
+
+duration = get_video_duration(args.video_file)
+print(f"Video Duration: {duration}")
+
+
 print()

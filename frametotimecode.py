@@ -30,4 +30,4 @@ def convert(frames):
     timecode_list = [hours, minutes, seconds, frames]
     timecode_list = pad_timecode(timecode_list)
 
-    return f"{timecode_list[0]}:{timecode_list[1]}:{timecode_list[2]}:{timecode_list[3]}"
+    return f"{timecode_list[0]}:{timecode_list[1]}:{timecode_list[2]}.{timecode_list[3]}"

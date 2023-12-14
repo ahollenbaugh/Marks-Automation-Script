@@ -268,18 +268,33 @@ result = get_frame_ranges_within_duration("comp467", "jobs", num_frames)
 print("Frame ranges within duration:")
 if args.verbose: print(result)
 
+def capture_screenshot(input_video, output_image, timecode):
+    # Run ffmpeg command to capture screenshot at the specified timecode
+    cmd = [
+        'ffmpeg',
+        '-ss', timecode,
+        '-i', input_video,
+        '-vframes', '1',
+        '-q:v', '2',
+        output_image
+    ]
+    subprocess.run(cmd)
+
 # Convert each frame to timecodes so we can grab thumbnails for each frame/frame range:
 timecodes_for_thumbnails = []
 for frame in result:
     tc = frametotimecode.convert(frame)
-    timecodes_for_thumbnails.append(tc)
+    output_image = f'screenshot_{tc.replace(":", "_")}.jpg'
+    capture_screenshot(args.video_file, output_image, tc)
+    timecodes_for_thumbnails.append([tc, output_image])
 
 if args.output == "csv" or "xls":
     # Write results to csv file:
     if args.output == "xls":
         workbook = openpyxl.Workbook()
         sheet = workbook.active
-        sheet.append(["Producer", "Operator", "job", "notes"])
+        for timecode in timecodes_for_thumbnails:
+            sheet.append(timecode)
         workbook.save('example.xlsx')
     with open('frame_fixes.csv', 'w', newline='') as file:
         writer = csv.writer(file)

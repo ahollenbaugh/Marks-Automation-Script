@@ -8,6 +8,7 @@ from datetime import date
 import subprocess
 import frametotimecode
 import openpyxl
+from PIL import Image
 
 def is_consecutive(frame1, frame2):
     return abs(frame1 - frame2) == 1 or frame2 == -1
@@ -280,13 +281,22 @@ def capture_screenshot(input_video, output_image, timecode):
     ]
     subprocess.run(cmd)
 
+def create_thumbnail(input_image_path, output_thumbnail_path, size=(96, 74)):
+    with Image.open(input_image_path) as img:
+        img.thumbnail(size)
+        img.save(output_thumbnail_path)
+
 # Convert each frame to timecodes so we can grab thumbnails for each frame/frame range:
 timecodes_for_thumbnails = []
 for frame in result:
     tc = frametotimecode.convert(frame)
     output_image = f'screenshot_{tc.replace(":", "_")}.jpg'
     capture_screenshot(args.video_file, output_image, tc)
+    create_thumbnail(output_image, os.path.join(os.getcwd(), f'thumbnail_{tc.replace(":", "_")}.jpg'))
     timecodes_for_thumbnails.append([tc, output_image])
+
+# Upload thumbnails to frame.io:
+# token (DO NOT DELETE) = fio-u-KMzOfLxOpmML0XeBZxbhsU5jIleW2UAzf_j2uDmssD8U0uE8B0-1a8iwFe5_kZ85
 
 if args.output == "csv" or "xls":
     # Write results to csv file:

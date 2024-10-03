@@ -29,3 +29,31 @@ And the CSV output would look something like this:
 |/ddnsan2/avengers/reel1/1920x1080|10-13|
 |/ddnsan2/avengers/reel1/1920x1080|19|
 |/ddnsan2/avengers/reel1/1920x1080|23-24|
+
+### Project 2
+- Scaled-up version of Project 1
+- Part of a virtual studio now
+- Supports custom input
+- Saves records to MongoDB database
+    - Collection 1: name of user that ran the script, name of user on file, date on file, date submitted
+    - Collection 2: name of user on file, date on file, location, frames
+- Accommodates different machines (namely AutoDesk Flame), not just Baselight
+- Also accommodates different workflows and users on a per-work order basis
+
+|flag|purpose|example|
+|----|-------|-------|
+|--files|takes Baselight/Flame files as arguments|`--files Baselight_BBonds_20230326.txt Flame_DFlowers_20230326.txt`
+|--xytech|takes Xytech work order file as argument|`--xytech Xytech_20230326.txt`
+|--verbose|enables console output|`--verbose`
+|--output|takes "csv" or "db" depending on how you want output formatted|`--output csv`
+
+Example run:
+
+`project-2.py --files Baselight_THolland_20230326.txt Flame_DFlowers_20230326.txt --xytech Xytech_20230326.txt --verbose -–output db`
+
+### Project 3
+- Upgraded version of Project 2 that displays the actual shots that need to be fixed
+- Processes a video file with `--process <video file>`
+- Queries database for all ranges that fall within the TRT of said video
+- Outputs an XLS with thumbnails for each frame range
+- Uploads each shot to frame.io

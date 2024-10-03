@@ -49,7 +49,7 @@ And the CSV output would look something like this:
 
 Example run:
 
-`project-2.py --files Baselight_THolland_20230326.txt Flame_DFlowers_20230326.txt --xytech Xytech_20230326.txt --verbose -–output db`
+`python project-2.py --files Baselight_BBonds_20230326.txt Flame_DFlowers_20230326.txt --xytech Xytech_20230326.txt --verbose -–output db`
 
 ### Project 3
 - Upgraded version of Project 2 that displays the actual shots that need to be fixed
@@ -57,3 +57,7 @@ Example run:
 - Queries database for all ranges that fall within the TRT of said video
 - Outputs an XLS with thumbnails for each frame range
 - Uploads each shot to frame.io
+
+Example run:
+
+`python project-3.py --files Baselight_BBonds_20230326.txt Flame_DFlowers_20230326.txt --xytech Xytech_20230326.txt --process twitch_nft_demo.mp4 --verbose --output xls`
